@@ -1,0 +1,22 @@
+[
+    {
+        "text": "Cate culori are Drapelul?",
+        "options": ["3", "6", "2", "7"],
+        "answer": "3"
+    },
+    {
+        "text": "Cat e 2 + 2?",
+        "options": ["3", "4", "5", "6"],
+        "answer": "4"
+    },
+    {
+        "text": "Care e capitala Franței?",
+        "options": ["Berlin", "Madrid", "Paris", "Rome"],
+        "answer": "Paris"
+    },
+    {
+        "text": "Cât e radical de 64?",
+        "options": ["7", "16", "5", "8"],
+        "answer": "8"
+    }
+]

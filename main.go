@@ -1,22 +1,32 @@
 package main
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
 type Question struct {
-	Text   string
-	Answer string
+	Text    string   `json:"text"`
+	Options []string `json:"options"`
+	Answer  string   `json:"answer"`
 }
 
-var questions = []Question{
-	{"Cate culori are Drapelul?", "3"},
-	{"Cat e 2 + 2?", "4"},
-	{"Care e capitala Franței", "Paris"},
-	{"Cât e radical de 64", "8"},
+var questions []Question
+
+func loadQuestions() error {
+	file, err := os.ReadFile("questions.json")
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(file, &questions)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func quizHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +40,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+
 	score := 0
 	for i, question := range questions {
 		answer := r.FormValue("q" + strconv.Itoa(i))
@@ -48,6 +59,11 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := loadQuestions()
+	if err != nil {
+		log.Fatal("Error loading questions:", err)
+	}
+
 	http.HandleFunc("/", quizHandler)
 	http.HandleFunc("/submit", submitHandler)
 	http.HandleFunc("/result", resultHandler)

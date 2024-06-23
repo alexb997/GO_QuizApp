@@ -1,4 +1,3 @@
-<!-- static/quiz.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,10 +10,14 @@
         {{range $index, $question := .}}
             <div>
                 <p>{{$question.Text}}</p>
-                <input type="text" name="q{{$index}}">
+                {{range $optIndex, $option := $question.Options}}
+                    <label class="radio-inline">
+                        <input type="radio" name="q{{$index}}" value="{{$option}}"> {{$option}}
+                    </label>
+                {{end}}
             </div>
         {{end}}
-        <button type="submit">Răspunde</button>
+        <button type="submit">Submit</button>
     </form>
 </body>
 </html>
