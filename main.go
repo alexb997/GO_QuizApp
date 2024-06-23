@@ -15,24 +15,60 @@ type Question struct {
 	Answer  string   `json:"answer"`
 }
 
-var questions []Question
+type Test struct {
+	Name      string     `json:"name"`
+	Questions []Question `json:"questions"`
+}
 
-func loadQuestions() error {
+type Tests struct {
+	Tests []Test `json:"tests"`
+}
+
+var tests Tests
+
+func loadTests() error {
 	file, err := os.ReadFile("questions.json")
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(file, &questions)
+	err = json.Unmarshal(file, &tests)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func quizHandler(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("static/quiz.html")
+func testsHandler(w http.ResponseWriter, r *http.Request) {
+	t, _ := template.ParseFiles("static/tests.html")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	t.Execute(w, questions)
+	t.Execute(w, tests)
+}
+
+func quizHandler(w http.ResponseWriter, r *http.Request) {
+	testIndex, err := strconv.Atoi(r.URL.Query().Get("test"))
+	if err != nil || testIndex < 0 || testIndex >= len(tests.Tests) {
+		http.Error(w, "Invalid test index", http.StatusBadRequest)
+		return
+	}
+
+	type QuizData struct {
+		Index     int
+		Questions []Question
+	}
+
+	quizData := QuizData{
+		Index:     testIndex,
+		Questions: tests.Tests[testIndex].Questions,
+	}
+
+	t, err := template.ParseFiles("static/quiz.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	t.Execute(w, quizData)
 }
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,8 +77,15 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	testIndex, err := strconv.Atoi(r.FormValue("test"))
+	if err != nil || testIndex < 0 || testIndex >= len(tests.Tests) {
+		http.Error(w, "Invalid test index", http.StatusBadRequest)
+		return
+	}
+
+	test := tests.Tests[testIndex]
 	score := 0
-	for i, question := range questions {
+	for i, question := range test.Questions {
 		answer := r.FormValue("q" + strconv.Itoa(i))
 		if answer == question.Answer {
 			score++
@@ -59,12 +102,13 @@ func resultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	err := loadQuestions()
+	err := loadTests()
 	if err != nil {
-		log.Fatal("Error loading questions:", err)
+		log.Fatal("Error loading tests:", err)
 	}
 
-	http.HandleFunc("/", quizHandler)
+	http.HandleFunc("/", testsHandler)
+	http.HandleFunc("/quiz", quizHandler)
 	http.HandleFunc("/submit", submitHandler)
 	http.HandleFunc("/result", resultHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

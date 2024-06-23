@@ -7,7 +7,8 @@
 </head>
 <body>
     <form action="/submit" method="post">
-        {{range $index, $question := .}}
+        <input type="hidden" name="test" value="{{.Index}}">
+        {{range $index, $question := .Questions}}
             <div>
                 <p>{{$question.Text}}</p>
                 {{range $optIndex, $option := $question.Options}}
